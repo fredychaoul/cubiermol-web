@@ -50,7 +50,9 @@
   .list .product:hover { background:var(--bg-alt); }
   .list .thumb { width:72px; height:72px; border-radius:8px; overflow:hidden; background:var(--bg-alt); border:1px solid var(--border); flex-shrink:0; }
   .list .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-  .list .thumb.no-photo { display:flex; align-items:center; justify-content:center; color:var(--text-3); font-size:10px; text-align:center; padding:4px; background:linear-gradient(135deg,#f5f3f0,#e8e5e0); }
+  .list .thumb.no-photo { background:linear-gradient(135deg,#f5f3f0,#e8e5e0); position:relative; }
+  .list .thumb.no-photo::after { content:''; display:block; }
+  .list .thumb.no-photo img { display:none; }
   .list .name { font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .list .meta-info { font-size:11px; color:var(--text-3); margin-top:3px; }
   .list .num { text-align:right; min-width:48px; }
@@ -65,7 +67,9 @@
   .card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.10); }
   .card-img { width:100%; aspect-ratio:4/3; background:var(--bg-alt); position:relative; overflow:hidden; }
   .card-img img { width:100%; height:100%; object-fit:cover; display:block; }
-  .card-img.no-photo { display:flex; align-items:center; justify-content:center; color:var(--text-3); font-size:12px; background:linear-gradient(135deg,#f5f3f0,#e8e5e0); }
+  .card-img.no-photo { background:linear-gradient(135deg,#f5f3f0,#e8e5e0); }
+  .card-img.no-photo::after { content:'Sin foto'; display:flex; align-items:center; justify-content:center; color:var(--text-3); font-size:12px; position:absolute; inset:0; }
+  .card-img.no-photo img { display:none; }
   .card-badge { position:absolute; top:10px; right:10px; font-size:10px; font-weight:700; padding:4px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em; }
   .card-badge.ok { background:rgba(46,125,50,0.92); color:#fff; }
   .card-badge.bajo { background:rgba(237,154,0,0.92); color:#fff; }
@@ -84,15 +88,21 @@
   .dot { width:9px; height:9px; border-radius:50%; }
   .dot.ok { background:var(--ok); } .dot.bajo { background:var(--bajo); }
   .dot.sin { background:var(--sin); } .dot.res { background:var(--res); }
+  .tc-bar { display:flex; align-items:center; gap:6px; margin-top:5px; }
+  .tc-bar label { font-size:10px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.04em; }
+  .tc-input { width:52px; border:1px solid var(--border); border-radius:5px; padding:2px 6px; font-size:11px; color:var(--text); background:var(--bg-alt); text-align:center; outline:none; }
+  .tc-input:focus { border-color:var(--gold); }
+  .precio-mxn { font-size:11px; color:var(--text-3); margin-top:2px; font-style:italic; }
   .loading,.empty { text-align:center; padding:60px 20px; color:var(--text-2); }
   .error-box { padding:20px; background:#fff3e0; border:1px solid #ffb74d; border-radius:10px; color:#5d4037; font-size:13px; line-height:1.6; white-space:pre-wrap; }
-  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1c1c1a; color:#fff; padding:13px 20px; border-radius:12px; font-size:13px; line-height:1.55; text-align:center; z-index:9999; max-width:320px; box-shadow:0 4px 24px rgba(0,0,0,0.28); white-space:pre-line; pointer-events:none; opacity:0; transition:opacity 0.3s; }
   .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.62); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; }
   .modal-bg.show { display:flex; }
   .modal { background:var(--bg); border-radius:16px; max-width:540px; width:100%; max-height:92vh; overflow-y:auto; }
   .modal-img { width:100%; height:340px; background:var(--bg-alt); overflow:hidden; border-radius:16px 16px 0 0; }
   .modal-img img { width:100%; height:100%; object-fit:cover; }
-  .modal-img.no-photo { display:flex; align-items:center; justify-content:center; color:var(--text-3); background:linear-gradient(135deg,#f5f3f0,#e8e5e0); }
+  .modal-img.no-photo { background:linear-gradient(135deg,#f5f3f0,#e8e5e0); }
+  .modal-img.no-photo::after { content:'Sin foto disponible'; display:flex; align-items:center; justify-content:center; color:var(--text-3); width:100%; height:100%; }
+  .modal-img.no-photo img { display:none; }
   .modal-pad { padding:22px 24px 24px; }
   .modal-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
   .modal-title { font-size:21px; font-weight:600; }
@@ -138,6 +148,8 @@
     <div class="brand-meta">
       <div class="live">● En vivo</div>
       <div><span id="updated">cargando...</span><button class="reload-btn" id="reload" onclick="cargar(true)">↻</button></div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:2px">Inv: <span id="inv-updated">—</span></div>
+      <div class="tc-bar"><label>TC</label><input class="tc-input" id="tc-val" type="number" min="1" max="99" step="0.5" value="18"><span style="font-size:10px;color:var(--text-3)">MXN/USD</span></div>
     </div>
   </div>
   <div class="controls">
@@ -195,6 +207,7 @@
         <div class="l">M² por pieza</div><div class="v" id="m-m2"></div>
         <div class="l">Precio/m²</div><div class="v" id="m-precio-m2"></div>
         <div class="l">Precio/placa</div><div class="v" id="m-precio-placa"></div>
+        <div class="l" id="l-mxn" style="display:none;color:var(--text-3)">Equiv. MXN/m²</div><div class="v" id="m-precio-mxn" style="display:none;font-size:12px;color:var(--text-3)"></div>
       </div>
       <button class="modal-wa" id="m-wa">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
@@ -207,28 +220,76 @@
 const CONFIG = {
   SHEET_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAU-LDIGgGqZ7kK7MMLvhZ-VWvW3hzOh-Iw_uQLkvDIedjxqQ74rqlNFjI9SwWFA/pub?gid=1221015975&single=true&output=csv',
   FOTOS_PATH: 'fotos/',
-  DRIVE_MANIFEST_URL: 'https://script.google.com/macros/s/AKfycbzTsgxLAyyicMh7-NByNhABz9aJvjH0xZXfltLJ06_qOqOKPTS6yMAgScG06aMXIFfZ1g/exec',
   REFRESH_SECONDS: 60,
 };
-let DATA=[], MATERIAL_FILTER='TODO', SEARCH='', UPDATED_AT=null, VIEW='galeria', IDX_VISIBLE=[], DRIVE_FOTOS={};
-const MAT_ORDER=['CUARZO','MÁRMOL','GRANITO','SINTERIZADA','CUARCITA','DEKTÓN','BASALTINA','OTRO'];
 
-async function cargarDriveFotos(){
+let TC = 18;
+function getTCInput(){ const el=document.getElementById('tc-val'); return el?parseFloat(el.value)||18:18; }
+function fmtMXN(p){
+  if(!p.precioM2 || p.moneda!=='USD') return '';
+  const tc=getTCInput();
+  const m2=Math.round(p.precioM2*tc);
+  const pl=p.precioPlaca?Math.round(p.precioPlaca*tc):0;
+  return '≈ $'+m2.toLocaleString('es-MX')+'/m²'+(pl?' · $'+pl.toLocaleString('es-MX')+'/placa':'')+' MXN';
+}
+
+// Drive fotos — cargadas automáticamente desde Google Drive al iniciar
+const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznWVPo7TyuUlq7lWLMJlouyaJRIrfnYWy74lor_5QHkjItvMfADg94IoidqAKq4YaNng/exec';
+let DRIVE_FOTOS = {};
+
+async function fetchDriveFotos() {
+  try {
+    const res = await fetch(DRIVE_SCRIPT_URL);
+    if (res.ok) DRIVE_FOTOS = await res.json();
+  } catch(e) { /* sin fotos de Drive, no crítico */ }
+}
+function driveUrl(id){
+  return DRIVE_FOTOS[String(id)] || null;
+}
+function fotoUrl(p){
+  return CONFIG.FOTOS_PATH + p.id + '.jpg';
+}
+function imgTag(p){
+  const local = fotoUrl(p);
+  const drive = driveUrl(p.id);
+  const noPhoto = "this.style.display='none';this.parentElement.classList.add('no-photo')";
+  const fallback = drive
+    ? "this.src='"+drive+"';this.onerror=function()+noPhoto+"
+    : noPhoto;
+  return '<img src="'+local+'" loading="lazy" onerror="'+fallback+'">';
+}
+function fotoUrl(p){
+  return CONFIG.FOTOS_PATH + p.id + '.jpg';
+}
+function imgTag(p){
+  const local = fotoUrl(p);
+  const drive = driveUrl(p.id);
+  const noPhoto = "this.style.display='none';this.parentElement.classList.add('no-photo')";
+  const fallback = drive
+    ? "this.src='"+drive+"';this.onerror=function(){"+noPhoto+"}"
+    : noPhoto;
+  return '<img src="'+local+'" loading="lazy" onerror="'+fallback+'">';
+}
+
+async function fetchUltimaActualizacion(){
   try{
-    const r=await fetch(CONFIG.DRIVE_MANIFEST_URL);
-    if(r.ok) DRIVE_FOTOS=await r.json();
+    const q = encodeURIComponent('select A order by A desc limit 1');
+    const url = 'https://docs.google.com/spreadsheets/d/1QZs0AndNPd9v_bzXJyCDkqdV2oXFyGC0/gviz/tq?tqx=out:json&gid=873596287&tq='+q;
+    const r = await fetch(url);
+    const t = await r.text();
+    const json = JSON.parse(t.substring(47,t.length-2));
+    const cell = json.table.rows[0]?.c[0];
+    if(cell?.f){
+      document.getElementById('inv-updated').textContent = cell.f;
+    }
   }catch(e){}
 }
-
-function getFotoURL(p){
-  if(DRIVE_FOTOS[String(p.id)]) return DRIVE_FOTOS[String(p.id)];
-  return CONFIG.FOTOS_PATH+p.id+'.jpg';
-}
+let DATA=[], MATERIAL_FILTER='TODO', SEARCH='', UPDATED_AT=null, VIEW='galeria', IDX_VISIBLE=[];
+const MAT_ORDER=['CUARZO','MÁRMOL','GRANITO','SINTERIZADA','CUARCITA','DEKTÓN','BASALTINA','OTRO'];
 
 async function cargar(forzar){
   const rb=document.getElementById('reload'); if(rb)rb.classList.add('loading');
   try{
-    if(!Object.keys(DRIVE_FOTOS).length) cargarDriveFotos();
     let url=CONFIG.SHEET_CSV_URL;
     if(forzar)url+=(url.indexOf('?')>=0?'&':'?')+'_t='+Date.now();
     const res=await fetch(url); if(!res.ok)throw new Error('HTTP '+res.status);
@@ -323,62 +384,35 @@ function fmtPlaca(p){
 
 function render(){const f=filtrar();const cont=document.getElementById('content');document.getElementById('shown').textContent=f.length+' productos';if(f.length===0){cont.innerHTML='<div class="empty">Sin resultados</div>';return;}IDX_VISIBLE=f;if(VIEW==='galeria')renderGaleria(f,cont);else renderLista(f,cont);}
 
-function renderGaleria(f,cont){cont.className='gallery';cont.innerHTML=f.map((p,i)=>{const foto=getFotoURL(p);const badge=dispClass(p)||'ok';const badgeTxt=dispLabel(p);const placa=fmtPlaca(p);return '<div class="card" data-idx="'+i+'"><div class="card-img"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"><span class="card-badge '+badge+'">'+badgeTxt+'</span></div><div class="card-body"><div class="card-name">'+esc(p.descripcion)+'</div><div class="card-meta">'+p.material+'</div><div class="card-meta" style="margin-top:3px;font-size:11px;color:var(--text-3)">'+placa+'</div><div class="card-actions"><button class="card-wa" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>Compartir</button></div></div></div>';}).join('');cont.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
+function renderGaleria(f,cont){cont.className='gallery';cont.innerHTML=f.map((p,i)=>{const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';const badge=dispClass(p)||'ok';const badgeTxt=dispLabel(p);const placa=fmtPlaca(p);return '<div class="card" data-idx="'+i+'"><div class="card-img">'+imgTag(p)+'<span class="card-badge '+badge+'">'+badgeTxt+'</span></div><div class="card-body"><div class="card-name">'+esc(p.descripcion)+'</div><div class="card-meta">'+p.material+'</div><div class="card-meta" style="margin-top:3px;font-size:11px;color:var(--text-3)">'+placa+'</div><div class="card-actions"><button class="card-wa" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>Compartir</button></div></div></div>';}).join('');cont.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
 
-function renderLista(f,cont){cont.className='list';cont.innerHTML=f.map((p,i)=>{const foto=getFotoURL(p);const cod=p.codigo?' · cód '+p.codigo:'';const placa=fmtPlaca(p);return '<div class="product" data-idx="'+i+'"><div class="thumb"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"></div><div><div class="name">'+esc(p.descripcion)+'</div><div class="meta-info">'+p.material+' · '+placa+' · ID '+p.id+cod+(fmtPrecio(p)?' · '+fmtPrecio(p):'')+'</div></div><div class="num stock"><div class="num-label">Stock</div><div class="num-value">'+p.existencia+'</div></div><div class="num res"><div class="num-label">Res</div><div class="num-value">'+p.reservadas+'</div></div><div class="num disp '+dispClass(p)+'"><div class="num-label">Disp</div><div class="num-value">'+p.disponible+'</div></div><button class="card-wa" style="padding:7px 9px;min-width:auto" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg></button><div class="dot '+dotClass(p)+'" style="justify-self:center"></div></div>';}).join('');cont.querySelectorAll('.product').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
+function renderLista(f,cont){cont.className='list';cont.innerHTML=f.map((p,i)=>{const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';const cod=p.codigo?' · cód '+p.codigo:'';const placa=fmtPlaca(p);return '<div class="product" data-idx="'+i+'"><div class="thumb">'+imgTag(p)+'</div><div><div class="name">'+esc(p.descripcion)+'</div><div class="meta-info">'+p.material+' · '+placa+' · ID '+p.id+cod+(fmtPrecio(p)?' · '+fmtPrecio(p):'')+'</div></div><div class="num stock"><div class="num-label">Stock</div><div class="num-value">'+p.existencia+'</div></div><div class="num res"><div class="num-label">Res</div><div class="num-value">'+p.reservadas+'</div></div><div class="num disp '+dispClass(p)+'"><div class="num-label">Disp</div><div class="num-value">'+p.disponible+'</div></div><button class="card-wa" style="padding:7px 9px;min-width:auto" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg></button><div class="dot '+dotClass(p)+'" style="justify-self:center"></div></div>';}).join('');cont.querySelectorAll('.product').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
 
 function msgWA(p){const m2=(p.largo&&p.ancho)?(p.largo*p.ancho):(p.m2pza||0);let msg='*'+p.descripcion+'*\n';msg+='Material: '+p.material+'\n';if(p.largo&&p.ancho){msg+='Formato: Largo '+p.largo.toFixed(2)+'m · Ancho '+p.ancho.toFixed(2)+'m';const e=fmtEspesor(p.espesor);if(e)msg+=' · Espesor '+e;msg+='\n';}if(m2)msg+='Superficie: '+m2.toFixed(2)+' m² por placa\n';var pr=fmtPrecio(p);if(pr)msg+='Precio: '+pr+'\n';msg+='Disponibilidad: '+dispLabelWA(p)+'\n\n_Cubiermol · Stone Design_';return msg;}
 
-function mostrarToast(msg,duracion){
-  duracion=duracion||4500;
-  let t=document.getElementById('toast');
-  if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
-  t.textContent=msg; t.style.opacity='1';
-  clearTimeout(t._to); t._to=setTimeout(function(){t.style.opacity='0';},duracion);
-}
-
 async function compartirProducto(p){
   const texto=msgWA(p);
-  const fotoURL=getFotoURL(p);
-
-  // 1. Intentar obtener la foto
-  let imgBlob=null;
+  const fotoURL=CONFIG.FOTOS_PATH+p.id+'.jpg';
+  // Intentar compartir con foto vía Web Share API (celular)
   try{
     const resp=await fetch(fotoURL);
-    if(resp.ok) imgBlob=await resp.blob();
-  }catch(e){}
-
-  // 2. Web Share API con archivo (funciona en iOS Safari y Chrome Android)
-  if(imgBlob && navigator.canShare){
-    try{
-      const file=new File([imgBlob],p.id+'.jpg',{type:imgBlob.type||'image/jpeg'});
+    if(resp.ok && navigator.canShare){
+      const blob=await resp.blob();
+      const file=new File([blob],p.descripcion+'.jpg',{type:blob.type||'image/jpeg'});
       if(navigator.canShare({files:[file]})){
         await navigator.share({files:[file],text:texto});
         return;
       }
-    }catch(e){ if(e.name==='AbortError')return; }
-  }
-
-  // 3. Si hay foto pero no se pudo compartir con archivo (escritorio / navegador sin soporte):
-  //    descargar imagen + copiar texto + abrir WhatsApp
-  if(imgBlob){
-    try{
-      const objURL=URL.createObjectURL(imgBlob);
-      const a=document.createElement('a');
-      a.href=objURL; a.download=p.id+'.jpg'; a.click();
-      setTimeout(function(){URL.revokeObjectURL(objURL);},2000);
-    }catch(e){}
-    let copiado=false;
-    try{ await navigator.clipboard.writeText(texto); copiado=true; }catch(e){}
-    window.open('https://wa.me/?text='+encodeURIComponent(texto),'_blank');
-    mostrarToast('📷 Imagen descargada'+(copiado?' · Texto copiado al portapapeles':'')+'\nEn WhatsApp adjunta la imagen y envía 🚀');
-    return;
-  }
-
-  // 4. Sin foto: Web Share API de texto o link wa.me
+    }
+  }catch(e){ /* sin foto o no soportado, seguimos */ }
+  // Intentar compartir solo texto vía Web Share API
   try{
-    if(navigator.share){ await navigator.share({text:texto}); return; }
+    if(navigator.share){
+      await navigator.share({text:texto});
+      return;
+    }
   }catch(e){ if(e.name==='AbortError')return; }
+  // Fallback final: abrir WhatsApp con solo texto (escritorio)
   window.open('https://wa.me/?text='+encodeURIComponent(texto),'_blank');
 }
 
@@ -387,13 +421,17 @@ function compartirWA(i){compartirProducto(IDX_VISIBLE[i]);}
 function mostrarDetalle(p){document.getElementById('m-name').textContent=p.descripcion;document.getElementById('m-sub').textContent=p.material+(p.tipo?' · '+p.tipo:'');document.getElementById('m-id').textContent=p.id;document.getElementById('m-codigo').textContent=p.codigo||'—';document.getElementById('m-material').textContent=p.material;document.getElementById('m-tipo').textContent=p.tipo||'—';document.getElementById('m-dim').textContent=(p.largo&&p.ancho)?('Largo '+p.largo.toFixed(2)+'m · Ancho '+p.ancho.toFixed(2)+'m'):'—';document.getElementById('m-esp').textContent=fmtEspesor(p.espesor)||'—';var m2calc=(p.largo&&p.ancho)?(p.largo*p.ancho):(p.m2pza||0);document.getElementById('m-m2').textContent=m2calc.toFixed(2)+' m²';
   var mon=p.moneda||'MXN';var sym=mon==='USD'?'USD $':'$';
   document.getElementById('m-precio-m2').textContent=p.precioM2?(sym+Math.round(p.precioM2).toLocaleString('es-MX')):'—';
-  document.getElementById('m-precio-placa').textContent=p.precioPlaca?(sym+Math.round(p.precioPlaca).toLocaleString('es-MX')):'—';document.getElementById('m-exist').textContent=p.existencia;document.getElementById('m-res').textContent=p.reservadas;document.getElementById('m-disp').textContent=p.disponible;const img=document.getElementById('m-img');const foto=getFotoURL(p);img.className='modal-img';img.innerHTML='<img src="'+foto+'" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto disponible\'">';const wa=document.getElementById('m-wa');wa.onclick=function(){compartirProducto(p);};document.getElementById('modal').classList.add('show');}
+  document.getElementById('m-precio-placa').textContent=p.precioPlaca?(sym+Math.round(p.precioPlaca).toLocaleString('es-MX')):'—';
+  var mxnStr=fmtMXN(p);var mxnEl=document.getElementById('m-precio-mxn');var lMxn=document.getElementById('l-mxn');
+  if(mxnEl){mxnEl.textContent=mxnStr||'';mxnEl.style.display=mxnStr?'':'none';}if(lMxn)lMxn.style.display=mxnStr?'':'none';document.getElementById('m-exist').textContent=p.existencia;document.getElementById('m-res').textContent=p.reservadas;document.getElementById('m-disp').textContent=p.disponible;const img=document.getElementById('m-img');const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';img.className='modal-img';const _driveM=driveUrl(p.id);const _noPhotoM="this.style.display='none';this.parentElement.classList.add('no-photo')";const _fbM=_driveM?("this.src='"+_driveM+"';this.onerror=function(){"+_noPhotoM+"}"):(  _noPhotoM);img.innerHTML='<img src="'+fotoUrl(p)+'" onerror="'+_fbM+'">';const wa=document.getElementById('m-wa');wa.onclick=function(){compartirProducto(p);};document.getElementById('modal').classList.add('show');}
 
 function cerrarModal(e){if(e&&e.target.closest('.modal'))return;document.getElementById('modal').classList.remove('show');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarModal();});
 document.getElementById('search').addEventListener('input',e=>{SEARCH=e.target.value;render();});
+const tcEl=document.getElementById('tc-val');if(tcEl)tcEl.addEventListener('change',()=>render());
 setInterval(()=>cargar(true),CONFIG.REFRESH_SECONDS*1000);
-cargar();
+fetchDriveFotos().then(()=>cargar());
+fetchUltimaActualizacion();
 </script>
 </body>
 </html>
