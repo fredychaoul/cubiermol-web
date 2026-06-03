@@ -207,14 +207,28 @@
 const CONFIG = {
   SHEET_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAU-LDIGgGqZ7kK7MMLvhZ-VWvW3hzOh-Iw_uQLkvDIedjxqQ74rqlNFjI9SwWFA/pub?gid=1221015975&single=true&output=csv',
   FOTOS_PATH: 'fotos/',
+  DRIVE_MANIFEST_URL: 'https://script.google.com/macros/s/AKfycbzTsgxLAyyicMh7-NByNhABz9aJvjH0xZXfltLJ06_qOqOKPTS6yMAgScG06aMXIFfZ1g/exec',
   REFRESH_SECONDS: 60,
 };
-let DATA=[], MATERIAL_FILTER='TODO', SEARCH='', UPDATED_AT=null, VIEW='galeria', IDX_VISIBLE=[];
+let DATA=[], MATERIAL_FILTER='TODO', SEARCH='', UPDATED_AT=null, VIEW='galeria', IDX_VISIBLE=[], DRIVE_FOTOS={};
 const MAT_ORDER=['CUARZO','MÁRMOL','GRANITO','SINTERIZADA','CUARCITA','DEKTÓN','BASALTINA','OTRO'];
+
+async function cargarDriveFotos(){
+  try{
+    const r=await fetch(CONFIG.DRIVE_MANIFEST_URL);
+    if(r.ok) DRIVE_FOTOS=await r.json();
+  }catch(e){}
+}
+
+function getFotoURL(p){
+  if(DRIVE_FOTOS[String(p.id)]) return DRIVE_FOTOS[String(p.id)];
+  return CONFIG.FOTOS_PATH+p.id+'.jpg';
+}
 
 async function cargar(forzar){
   const rb=document.getElementById('reload'); if(rb)rb.classList.add('loading');
   try{
+    if(!Object.keys(DRIVE_FOTOS).length) cargarDriveFotos();
     let url=CONFIG.SHEET_CSV_URL;
     if(forzar)url+=(url.indexOf('?')>=0?'&':'?')+'_t='+Date.now();
     const res=await fetch(url); if(!res.ok)throw new Error('HTTP '+res.status);
@@ -309,9 +323,9 @@ function fmtPlaca(p){
 
 function render(){const f=filtrar();const cont=document.getElementById('content');document.getElementById('shown').textContent=f.length+' productos';if(f.length===0){cont.innerHTML='<div class="empty">Sin resultados</div>';return;}IDX_VISIBLE=f;if(VIEW==='galeria')renderGaleria(f,cont);else renderLista(f,cont);}
 
-function renderGaleria(f,cont){cont.className='gallery';cont.innerHTML=f.map((p,i)=>{const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';const badge=dispClass(p)||'ok';const badgeTxt=dispLabel(p);const placa=fmtPlaca(p);return '<div class="card" data-idx="'+i+'"><div class="card-img"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"><span class="card-badge '+badge+'">'+badgeTxt+'</span></div><div class="card-body"><div class="card-name">'+esc(p.descripcion)+'</div><div class="card-meta">'+p.material+'</div><div class="card-meta" style="margin-top:3px;font-size:11px;color:var(--text-3)">'+placa+'</div><div class="card-actions"><button class="card-wa" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>Compartir</button></div></div></div>';}).join('');cont.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
+function renderGaleria(f,cont){cont.className='gallery';cont.innerHTML=f.map((p,i)=>{const foto=getFotoURL(p);const badge=dispClass(p)||'ok';const badgeTxt=dispLabel(p);const placa=fmtPlaca(p);return '<div class="card" data-idx="'+i+'"><div class="card-img"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"><span class="card-badge '+badge+'">'+badgeTxt+'</span></div><div class="card-body"><div class="card-name">'+esc(p.descripcion)+'</div><div class="card-meta">'+p.material+'</div><div class="card-meta" style="margin-top:3px;font-size:11px;color:var(--text-3)">'+placa+'</div><div class="card-actions"><button class="card-wa" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>Compartir</button></div></div></div>';}).join('');cont.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
 
-function renderLista(f,cont){cont.className='list';cont.innerHTML=f.map((p,i)=>{const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';const cod=p.codigo?' · cód '+p.codigo:'';const placa=fmtPlaca(p);return '<div class="product" data-idx="'+i+'"><div class="thumb"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"></div><div><div class="name">'+esc(p.descripcion)+'</div><div class="meta-info">'+p.material+' · '+placa+' · ID '+p.id+cod+(fmtPrecio(p)?' · '+fmtPrecio(p):'')+'</div></div><div class="num stock"><div class="num-label">Stock</div><div class="num-value">'+p.existencia+'</div></div><div class="num res"><div class="num-label">Res</div><div class="num-value">'+p.reservadas+'</div></div><div class="num disp '+dispClass(p)+'"><div class="num-label">Disp</div><div class="num-value">'+p.disponible+'</div></div><button class="card-wa" style="padding:7px 9px;min-width:auto" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg></button><div class="dot '+dotClass(p)+'" style="justify-self:center"></div></div>';}).join('');cont.querySelectorAll('.product').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
+function renderLista(f,cont){cont.className='list';cont.innerHTML=f.map((p,i)=>{const foto=getFotoURL(p);const cod=p.codigo?' · cód '+p.codigo:'';const placa=fmtPlaca(p);return '<div class="product" data-idx="'+i+'"><div class="thumb"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto\'"></div><div><div class="name">'+esc(p.descripcion)+'</div><div class="meta-info">'+p.material+' · '+placa+' · ID '+p.id+cod+(fmtPrecio(p)?' · '+fmtPrecio(p):'')+'</div></div><div class="num stock"><div class="num-label">Stock</div><div class="num-value">'+p.existencia+'</div></div><div class="num res"><div class="num-label">Res</div><div class="num-value">'+p.reservadas+'</div></div><div class="num disp '+dispClass(p)+'"><div class="num-label">Disp</div><div class="num-value">'+p.disponible+'</div></div><button class="card-wa" style="padding:7px 9px;min-width:auto" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg></button><div class="dot '+dotClass(p)+'" style="justify-self:center"></div></div>';}).join('');cont.querySelectorAll('.product').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
 
 function msgWA(p){const m2=(p.largo&&p.ancho)?(p.largo*p.ancho):(p.m2pza||0);let msg='*'+p.descripcion+'*\n';msg+='Material: '+p.material+'\n';if(p.largo&&p.ancho){msg+='Formato: Largo '+p.largo.toFixed(2)+'m · Ancho '+p.ancho.toFixed(2)+'m';const e=fmtEspesor(p.espesor);if(e)msg+=' · Espesor '+e;msg+='\n';}if(m2)msg+='Superficie: '+m2.toFixed(2)+' m² por placa\n';var pr=fmtPrecio(p);if(pr)msg+='Precio: '+pr+'\n';msg+='Disponibilidad: '+dispLabelWA(p)+'\n\n_Cubiermol · Stone Design_';return msg;}
 
@@ -325,7 +339,7 @@ function mostrarToast(msg,duracion){
 
 async function compartirProducto(p){
   const texto=msgWA(p);
-  const fotoURL=CONFIG.FOTOS_PATH+p.id+'.jpg';
+  const fotoURL=getFotoURL(p);
 
   // 1. Intentar obtener la foto
   let imgBlob=null;
@@ -373,7 +387,7 @@ function compartirWA(i){compartirProducto(IDX_VISIBLE[i]);}
 function mostrarDetalle(p){document.getElementById('m-name').textContent=p.descripcion;document.getElementById('m-sub').textContent=p.material+(p.tipo?' · '+p.tipo:'');document.getElementById('m-id').textContent=p.id;document.getElementById('m-codigo').textContent=p.codigo||'—';document.getElementById('m-material').textContent=p.material;document.getElementById('m-tipo').textContent=p.tipo||'—';document.getElementById('m-dim').textContent=(p.largo&&p.ancho)?('Largo '+p.largo.toFixed(2)+'m · Ancho '+p.ancho.toFixed(2)+'m'):'—';document.getElementById('m-esp').textContent=fmtEspesor(p.espesor)||'—';var m2calc=(p.largo&&p.ancho)?(p.largo*p.ancho):(p.m2pza||0);document.getElementById('m-m2').textContent=m2calc.toFixed(2)+' m²';
   var mon=p.moneda||'MXN';var sym=mon==='USD'?'USD $':'$';
   document.getElementById('m-precio-m2').textContent=p.precioM2?(sym+Math.round(p.precioM2).toLocaleString('es-MX')):'—';
-  document.getElementById('m-precio-placa').textContent=p.precioPlaca?(sym+Math.round(p.precioPlaca).toLocaleString('es-MX')):'—';document.getElementById('m-exist').textContent=p.existencia;document.getElementById('m-res').textContent=p.reservadas;document.getElementById('m-disp').textContent=p.disponible;const img=document.getElementById('m-img');const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';img.className='modal-img';img.innerHTML='<img src="'+foto+'" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto disponible\'">';const wa=document.getElementById('m-wa');wa.onclick=function(){compartirProducto(p);};document.getElementById('modal').classList.add('show');}
+  document.getElementById('m-precio-placa').textContent=p.precioPlaca?(sym+Math.round(p.precioPlaca).toLocaleString('es-MX')):'—';document.getElementById('m-exist').textContent=p.existencia;document.getElementById('m-res').textContent=p.reservadas;document.getElementById('m-disp').textContent=p.disponible;const img=document.getElementById('m-img');const foto=getFotoURL(p);img.className='modal-img';img.innerHTML='<img src="'+foto+'" onerror="this.parentElement.classList.add(\'no-photo\');this.parentElement.innerHTML=\'Sin foto disponible\'">';const wa=document.getElementById('m-wa');wa.onclick=function(){compartirProducto(p);};document.getElementById('modal').classList.add('show');}
 
 function cerrarModal(e){if(e&&e.target.closest('.modal'))return;document.getElementById('modal').classList.remove('show');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarModal();});
