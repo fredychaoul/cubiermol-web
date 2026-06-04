@@ -392,19 +392,22 @@ function msgWA(p){const m2=(p.largo&&p.ancho)?(p.largo*p.ancho):(p.m2pza||0);let
 
 async function compartirProducto(p){
   const texto=msgWA(p);
-  const fotoURL=CONFIG.FOTOS_PATH+p.id+'.jpg';
   // Intentar compartir con foto vía Web Share API (celular)
-  try{
-    const resp=await fetch(fotoURL);
-    if(resp.ok && navigator.canShare){
-      const blob=await resp.blob();
-      const file=new File([blob],p.descripcion+'.jpg',{type:blob.type||'image/jpeg'});
-      if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],text:texto});
-        return;
+  // Prioridad: foto de Drive, luego local
+  const urls=[driveUrl(p.id),CONFIG.FOTOS_PATH+p.id+'.jpg'].filter(Boolean);
+  for(const fotoURL of urls){
+    try{
+      const resp=await fetch(fotoURL);
+      if(resp.ok && navigator.canShare){
+        const blob=await resp.blob();
+        const file=new File([blob],p.descripcion+'.jpg',{type:blob.type||'image/jpeg'});
+        if(navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],text:texto});
+          return;
+        }
       }
-    }
-  }catch(e){ /* sin foto o no soportado, seguimos */ }
+    }catch(e){ continue; }
+  }
   // Intentar compartir solo texto vía Web Share API
   try{
     if(navigator.share){
