@@ -394,7 +394,7 @@ async function compartirProducto(p){
   const texto=msgWA(p);
   // Intentar compartir con foto vía Web Share API (celular)
   // Prioridad: foto de Drive, luego local
-  const urls=[driveUrl(p.id),CONFIG.FOTOS_PATH+p.id+'.jpg'].filter(Boolean);
+  const urls=['/api/photo?id='+p.id, CONFIG.FOTOS_PATH+p.id+'.jpg'].filter(Boolean);
   for(const fotoURL of urls){
     try{
       const resp=await fetch(fotoURL);
