@@ -247,7 +247,7 @@ function driveUrl(id){
   return DRIVE_FOTOS[String(id)] || null;
 }
 function fotoUrl(p){
-  return CONFIG.FOTOS_PATH + p.id + '.jpg';
+  return driveUrl(p.id) || ('/api/photo?id=' + p.id);
 }
 function imgTag(p){
   const local = fotoUrl(p);
@@ -259,7 +259,7 @@ function imgTag(p){
   return '<img src="'+local+'" loading="lazy" onerror="'+fallback+'">';
 }
 function fotoUrl(p){
-  return CONFIG.FOTOS_PATH + p.id + '.jpg';
+  return driveUrl(p.id) || ('/api/photo?id=' + p.id);
 }
 function imgTag(p){
   const local = fotoUrl(p);
