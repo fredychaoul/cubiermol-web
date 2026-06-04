@@ -235,7 +235,7 @@ function fmtMXN(p){
 
 // Drive fotos — cargadas automáticamente desde Google Drive al iniciar
 const DRIVE_SCRIPT_URL = '/api/map';
-let DRIVE_FOTOS = {};
+let DRIVE_FOTOS = {}; const _lazyObs = new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){const im=e.target; if(im.dataset.src){im.src=im.dataset.src; im.removeAttribute('data-src');} _lazyObs.unobserve(im);}});},{rootMargin:'300px'}); function observeLazy(){document.querySelectorAll('img[data-src]').forEach(im=>_lazyObs.observe(im));}
 
 async function fetchDriveFotos() {
   try {
@@ -256,7 +256,7 @@ function imgTag(p){
   const fallback = drive
     ? "this.src='"+drive+"';this.onerror=function()+noPhoto+"
     : noPhoto;
-  return '<img src="'+local+'" loading="lazy" onerror="'+fallback+'">';
+  return '<img data-src="'+local+'" loading="lazy" onerror="'+fallback+'">';
 }
 function fotoUrl(p){
   return driveUrl(p.id) || ('/api/photo?id=' + p.id);
@@ -268,7 +268,7 @@ function imgTag(p){
   const fallback = drive
     ? "this.src='"+drive+"';this.onerror=function(){"+noPhoto+"}"
     : noPhoto;
-  return '<img src="'+local+'" loading="lazy" onerror="'+fallback+'">';
+  return '<img data-src="'+local+'" loading="lazy" onerror="'+fallback+'">';
 }
 
 async function fetchUltimaActualizacion(){
@@ -382,7 +382,7 @@ function fmtPlaca(p){
   return parts.join(' · ');
 }
 
-function render(){const f=filtrar();const cont=document.getElementById('content');document.getElementById('shown').textContent=f.length+' productos';if(f.length===0){cont.innerHTML='<div class="empty">Sin resultados</div>';return;}IDX_VISIBLE=f;if(VIEW==='galeria')renderGaleria(f,cont);else renderLista(f,cont);}
+function render(){const f=filtrar();const cont=document.getElementById('content');document.getElementById('shown').textContent=f.length+' productos';if(f.length===0){cont.innerHTML='<div class="empty">Sin resultados</div>';return;}IDX_VISIBLE=f;if(VIEW==='galeria')renderGaleria(f,cont);else renderLista(f,cont);observeLazy();}
 
 function renderGaleria(f,cont){cont.className='gallery';cont.innerHTML=f.map((p,i)=>{const foto=CONFIG.FOTOS_PATH+p.id+'.jpg';const badge=dispClass(p)||'ok';const badgeTxt=dispLabel(p);const placa=fmtPlaca(p);return '<div class="card" data-idx="'+i+'"><div class="card-img">'+imgTag(p)+'<span class="card-badge '+badge+'">'+badgeTxt+'</span></div><div class="card-body"><div class="card-name">'+esc(p.descripcion)+'</div><div class="card-meta">'+p.material+'</div><div class="card-meta" style="margin-top:3px;font-size:11px;color:var(--text-3)">'+placa+'</div><div class="card-actions"><button class="card-wa" onclick="event.stopPropagation();compartirWA('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>Compartir</button></div></div></div>';}).join('');cont.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>mostrarDetalle(f[parseInt(el.dataset.idx)])));}
 
