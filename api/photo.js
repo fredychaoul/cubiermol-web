@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     const ct = img.headers.get('content-type') || 'image/jpeg';
     const buf = Buffer.from(await img.arrayBuffer());
     res.setHeader('Content-Type', ct);
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(200).send(buf);
   } catch (e) {
